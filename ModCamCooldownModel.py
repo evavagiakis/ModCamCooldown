@@ -33,13 +33,65 @@ g2=k*al2 #W/K
 g3=k*al3 #W/K
 
 Wloading=26 #W, loading estimate on the 40 K front plate 
+Wloading2=10 #W, loading estimate on the 40 K front shell
 t=3600 #s, time for cooldown change estimate
-
-#See overleaf document for algebra; in the future, want to do this in python. 
+ 
 #Solving this system of equations
-A=np.array([[30.25,-29.25,0],[0,4.6,-3.6],[0,0,1.38]])
-B=np.array([201,170,192])
-X=np.linalg.inv(A).dot(B)
 
-print(X)
+temps1=[tc1i]
+temps2=[tc2i]
+temps3=[tc3i]
 
+for s in range(10):
+	B1=tc1i+Wloading*t/c1
+	B2=tc2i+Wloading2*t/c2
+	B3=(tc3i+g3*tbath*t/c3)
+	
+	A11=(g1*t/c1 +1)
+	A12=(-g1*t/c1)
+	A13=0
+	
+	A21=0
+	A22=(g2*t/c2+1)
+	A23=(-g2*t/c2)
+	
+	A31=0
+	A32=0
+	A33=(g3*t/c3+1)
+	
+	A=np.array([[A11,A12,A13],[A21,A22,A23],[A31,A32,A33]])
+	B=np.array([B1,B2,B3])
+	X=np.linalg.inv(A).dot(B)
+	
+	print(A)
+	print(B)		
+	print(X)
+		
+
+	temps1.append(X[0])
+	temps2.append(X[1])
+	temps3.append(X[2])
+	
+	tc1i=X[0]
+	tc2i=X[1]
+	tc3i=X[2]
+	
+	
+plt.plot(temps1,'b-',label='40 K Front Plate, 10W shell loading')
+plt.plot(temps2,'g-',label='40 K G10 Ring, 10W shell loading')
+plt.plot(temps3,'r-',label='40 K Rear Shell, 10W shell loading')
+
+model=np.loadtxt('model.txt',delimiter=',')
+
+plt.plot(model[:,0],'b:',label='40 K Front Plate')
+plt.plot(model[:,1],'g:',label='40 K G10 Ring')
+plt.plot(model[:,2],'r:',label='40 K Rear Shell')
+
+plt.ylabel('K')
+plt.xlabel('Hours')
+plt.title('Adding 10 W loading to the 40 K Front Shell')
+plt.legend()
+
+plt.show()
+
+#np.savetxt('model_withshellloading.txt',np.array([temps1,temps2,temps3]).T,delimiter=',')
